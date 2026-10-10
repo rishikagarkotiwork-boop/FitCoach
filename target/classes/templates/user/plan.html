@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Workout Plan')}"></head>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+<div class="container">
+    <p><a th:href="@{/user}">&larr; Back to dashboard</a></p>
+    <div class="card">
+        <h2 th:text="${plan.title}">Plan title</h2>
+        <p class="muted" th:text="${plan.difficulty} + ' | ' + ${plan.durationWeeks} + ' weeks | Coach ' + ${plan.coach.name}">info</p>
+        <p th:text="${plan.description}">description</p>
+        <h3>Weekly schedule</h3>
+        <div class="table-wrap" th:if="${!#lists.isEmpty(planDays)}">
+            <table>
+                <thead><tr><th>Day</th><th>Focus</th><th>Exercises</th></tr></thead>
+                <tbody>
+                <tr th:each="d : ${planDays}">
+                    <td><b th:text="${#strings.capitalize(#strings.toLowerCase(d.day))}">Monday</b></td>
+                    <td th:text="${d.focus}">Legs</td>
+                    <td th:text="${d.details}">Squats</td>
+                </tr>
+                </tbody>
+            </table>
+            <p class="muted">Following this plan adds these days to your weekly split.</p>
+        </div>
+        <div th:if="${#lists.isEmpty(planDays)}">
+            <p th:text="${plan.schedule}">schedule</p>
+            <ul class="clean"><li th:each="ex : ${plan.exerciseList}" th:text="${ex}">exercise</li></ul>
+        </div>
+        <form th:if="${!enrolled}" th:action="@{/user/plans/{id}/enroll(id=${plan.id})}" method="post">
+            <button class="btn ok" type="submit">Follow this plan</button>
+        </form>
+        <form th:if="${enrolled}" th:action="@{/user/plans/{id}/leave(id=${plan.id})}" method="post">
+            <button class="btn light" type="submit">Leave this plan</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

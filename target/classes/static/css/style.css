@@ -1,0 +1,58 @@
+:root {
+  --bg: #f4f6fb; --card: #fff; --text: #1f2937; --muted: #6b7280; --line: #e5e7eb;
+  --primary: #2563eb; --primary-dark: #1d4ed8; --danger: #dc2626; --ok: #16a34a;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+a { color: var(--primary); text-decoration: none; }
+.nav { background: #111827; color: #fff; display: flex; align-items: center; gap: 1rem; padding: .75rem 1.5rem; flex-wrap: wrap; }
+.nav .brand { font-weight: 700; font-size: 1.15rem; margin-right: auto; }
+.nav a { color: #d1d5db; font-size: .9rem; }
+.nav a:hover { color: #fff; }
+.nav form { margin: 0; }
+.container { max-width: 1150px; margin: 0 auto; padding: 1.25rem; }
+.banner { background: #dbeafe; color: #1e3a8a; padding: .6rem 1.5rem; font-size: .9rem; text-align: center; }
+.alert { padding: .7rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: .92rem; }
+.alert.ok { background: #dcfce7; color: #14532d; }
+.alert.err { background: #fee2e2; color: #7f1d1d; }
+.card { background: var(--card); border-radius: 12px; padding: 1.1rem 1.25rem; margin-bottom: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.card h2 { margin: 0 0 .8rem; font-size: 1.1rem; }
+.card h3 { margin: 1rem 0 .5rem; font-size: .98rem; }
+.grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.stats { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 1.25rem; }
+.stat { background: var(--card); border-radius: 12px; padding: .9rem 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.stat b { display: block; font-size: 1.6rem; }
+.stat span { color: var(--muted); font-size: .82rem; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { text-align: left; padding: .5rem .55rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { color: var(--muted); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; }
+.table-wrap { overflow-x: auto; }
+input, select, textarea { font: inherit; padding: .45rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; max-width: 100%; }
+textarea { width: 100%; resize: vertical; }
+label { display: block; font-size: .82rem; color: var(--muted); margin: .6rem 0 .2rem; }
+.row { display: flex; gap: .6rem; flex-wrap: wrap; align-items: end; }
+.row > div { flex: 1 1 140px; }
+.row input, .row select { width: 100%; }
+td input, td select { width: 100%; min-width: 90px; }
+.btn { background: var(--primary); color: #fff; border: 0; padding: .5rem .9rem; border-radius: 8px; cursor: pointer; font: inherit; font-size: .88rem; display: inline-block; }
+.btn:hover { background: var(--primary-dark); }
+.btn.danger { background: var(--danger); }
+.btn.ok { background: var(--ok); }
+.btn.light { background: #e5e7eb; color: #111827; }
+.btn.sm { padding: .3rem .6rem; font-size: .8rem; }
+.inline { display: inline; }
+.badge { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .75rem; font-weight: 600; background: #e5e7eb; }
+.badge.PENDING { background: #fef3c7; color: #92400e; }
+.badge.APPROVED { background: #dcfce7; color: #166534; }
+.badge.REJECTED { background: #fee2e2; color: #991b1b; }
+.muted { color: var(--muted); font-size: .85rem; }
+.chart-box { position: relative; height: 260px; }
+.progress { background: #e5e7eb; border-radius: 999px; height: 12px; overflow: hidden; }
+.progress > div { background: var(--ok); height: 100%; }
+.msg { border-left: 3px solid var(--primary); padding: .35rem .75rem; margin-bottom: .6rem; background: #f9fafb; border-radius: 0 8px 8px 0; font-size: .9rem; }
+.msg.mine { border-left-color: var(--ok); }
+.scroll { max-height: 320px; overflow-y: auto; }
+.auth { max-width: 400px; margin: 3rem auto; }
+.plan-item { border: 1px solid var(--line); border-radius: 10px; padding: .75rem .9rem; margin-bottom: .7rem; }
+.plan-item h4 { margin: 0 0 .25rem; }
+ul.clean { margin: .3rem 0; padding-left: 1.2rem; }

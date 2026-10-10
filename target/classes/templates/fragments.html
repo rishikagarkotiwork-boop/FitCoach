@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' - ' + ${siteName}">Page - FitCoach</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<nav th:fragment="navbar" class="nav">
+    <span class="brand" th:text="${siteName}">FitCoach</span>
+    <a th:href="@{/dashboard}">Dashboard</a>
+    <span th:if="${currentUser != null}" style="font-size:.85rem"
+          th:text="${currentUser.name} + ' (' + ${currentUser.role} + ')'">Name (ROLE)</span>
+    <form th:action="@{/logout}" method="post">
+        <button type="submit" class="btn light sm">Sign out</button>
+    </form>
+</nav>
+
+<div th:fragment="banner" th:if="${announcement != null and !#strings.isEmpty(announcement)}"
+     class="banner" th:text="${announcement}"></div>
+
+<div th:fragment="flash">
+    <div th:if="${msg}" class="alert ok" th:text="${msg}"></div>
+    <div th:if="${error}" class="alert err" th:text="${error}"></div>
+</div>
+
+</body>
+</html>

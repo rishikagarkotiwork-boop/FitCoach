@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Admin Dashboard')}"></head>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+<div th:replace="~{fragments :: banner}"></div>
+<div class="container">
+    <h1>Admin Dashboard</h1>
+    <div th:replace="~{fragments :: flash}"></div>
+
+    <!-- User management -->
+    <div class="card" id="users">
+        <h2>User Management</h2>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="u : ${users}">
+                    <td th:text="${u.id}">1</td>
+                    <td><input name="name" th:attr="form='uf-' + ${u.id}" th:value="${u.name}" required></td>
+                    <td><input name="email" type="email" th:attr="form='uf-' + ${u.id}" th:value="${u.email}" required></td>
+                    <td>
+                        <select name="role" th:attr="form='uf-' + ${u.id}">
+                            <option th:each="r : ${roles}" th:value="${r}" th:text="${r}" th:selected="${r == u.role}"></option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name="enabled" th:attr="form='uf-' + ${u.id}">
+                            <option value="true" th:selected="${u.enabled}">Active</option>
+                            <option value="false" th:selected="${!u.enabled}">Disabled</option>
+                        </select>
+                    </td>
+                    <td th:text="${u.joinedOn}">2024-01-01</td>
+                    <td style="white-space:nowrap">
+                        <form class="inline" th:id="'uf-' + ${u.id}" th:action="@{/admin/users/{id}/update(id=${u.id})}" method="post">
+                            <button class="btn sm" type="submit">Save</button>
+                        </form>
+                        <form class="inline" th:action="@{/admin/users/{id}/delete(id=${u.id})}" method="post">
+                            <button class="btn danger sm" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <h3>Add user</h3>
+        <form th:action="@{/admin/users}" method="post" class="row">
+            <div><label>Name</label><input name="name" required></div>
+            <div><label>Email</label><input name="email" type="email" required></div>
+            <div><label>Password</label><input name="password" type="password" minlength="6" required></div>
+            <div><label>Role</label>
+                <select name="role"><option th:each="r : ${roles}" th:value="${r}" th:text="${r}"></option></select>
+            </div>
+            <div><button class="btn ok" type="submit">Create user</button></div>
+        </form>
+    </div>
+
+    <div class="grid">
+        <!-- Content overview chart -->
+        <div class="card">
+            <h2>Content Overview</h2>
+            <div class="chart-box"><canvas id="contentChart"></canvas></div>
+        </div>
+
+        <!-- System settings -->
+        <div class="card" id="settings">
+            <h2>System Settings</h2>
+            <form th:action="@{/admin/settings}" method="post">
+                <label>Site name</label>
+                <input name="siteName" th:value="${siteName}" required style="width:100%">
+                <label>Allow new registrations</label>
+                <select name="allowRegistration">
+                    <option value="true" th:selected="${allowRegistration == 'true'}">Yes</option>
+                    <option value="false" th:selected="${allowRegistration == 'false'}">No</option>
+                </select>
+                <label>Max workout plans per coach</label>
+                <input name="maxPlansPerCoach" type="number" min="1" max="9999" th:value="${maxPlans}" required>
+                <label>Announcement banner (blank to hide)</label>
+                <input name="announcement" th:value="${announcement}" style="width:100%">
+                <p><button class="btn" type="submit">Save settings</button></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Content moderation -->
+    <div class="card" id="content">
+        <h2>Content Moderation</h2>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Title</th><th>Author</th><th>Content</th><th>Submitted</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="c : ${contentItems}">
+                    <td th:text="${c.title}">Title</td>
+                    <td th:text="${c.author.name}">Author</td>
+                    <td th:text="${c.body}">Body</td>
+                    <td th:text="${c.submittedOn}">date</td>
+                    <td><span class="badge" th:classappend="${c.status}" th:text="${c.status}">PENDING</span></td>
+                    <td style="white-space:nowrap">
+                        <form class="inline" th:action="@{/admin/content/{id}/approve(id=${c.id})}" method="post">
+                            <button class="btn ok sm" type="submit" th:disabled="${c.status.name() == 'APPROVED'}">Approve</button>
+                        </form>
+                        <form class="inline" th:action="@{/admin/content/{id}/reject(id=${c.id})}" method="post">
+                            <button class="btn danger sm" type="submit" th:disabled="${c.status.name() == 'REJECTED'}">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(contentItems)}"><td colspan="6" class="muted">No content submitted yet.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- User feedback -->
+    <div class="card">
+        <h2>Recent User Feedback</h2>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>User</th><th>Rating</th><th>Feedback</th><th>Date</th></tr></thead>
+                <tbody>
+                <tr th:each="f : ${feedback}">
+                    <td th:text="${f.user.name}">User</td>
+                    <td th:text="${f.rating} + ' / 5'">5 / 5</td>
+                    <td th:text="${f.text}">Text</td>
+                    <td th:text="${#temporals.format(f.createdAt, 'dd MMM yyyy HH:mm')}">date</td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(feedback)}"><td colspan="4" class="muted">No feedback yet.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script th:inline="javascript">
+    new Chart(document.getElementById('contentChart'), {
+        type: 'doughnut',
+        data: {
+            labels: /*[[${statLabels}]]*/ [],
+            datasets: [{ data: /*[[${statData}]]*/ [], backgroundColor: ['#f59e0b', '#16a34a', '#dc2626'] }]
+        },
+        options: { maintainAspectRatio: false }
+    });
+</script>
+</body>
+</html>

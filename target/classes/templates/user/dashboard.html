@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('My Dashboard')}"></head>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+<div th:replace="~{fragments :: banner}"></div>
+<div class="container">
+    <h1 th:text="'Welcome, ' + ${currentUser.name}">Welcome</h1>
+    <div th:replace="~{fragments :: flash}"></div>
+
+    <!-- Workout plan access -->
+    <div class="grid" id="plans">
+        <div class="card">
+            <h2>My Active Plans</h2>
+            <div th:each="e : ${enrollments}" class="plan-item">
+                <h4><span th:text="${e.plan.title}">Plan</span>
+                    <span th:if="${e.plan.assignedTo != null}" class="badge APPROVED">Personalised for you</span></h4>
+                <div class="muted" th:text="'Coach ' + ${e.plan.coach.name} + ' | ' + ${e.plan.schedule}">info</div>
+                <div style="margin-top:.5rem">
+                    <a class="btn sm" th:href="@{/user/plans/{id}(id=${e.plan.id})}">View plan</a>
+                    <form class="inline" th:action="@{/user/plans/{id}/leave(id=${e.plan.id})}" method="post">
+                        <button class="btn light sm" type="submit">Leave</button>
+                    </form>
+                </div>
+            </div>
+            <p th:if="${#lists.isEmpty(enrollments)}" class="muted">You are not following any plan yet - pick one from the list.</p>
+        </div>
+        <div class="card">
+            <h2>Available Plans</h2>
+            <div class="scroll">
+                <div th:each="p : ${plans}" class="plan-item">
+                    <h4><span th:text="${p.title}">Plan</span>
+                        <span th:if="${personalPlanIds.contains(p.id)}" class="badge APPROVED">Personalised for you</span></h4>
+                    <div class="muted" th:text="${p.difficulty} + ' | ' + ${p.durationWeeks} + ' weeks | Coach ' + ${p.coach.name}">info</div>
+                    <p th:text="${p.description}">desc</p>
+                    <a class="btn light sm" th:href="@{/user/plans/{id}(id=${p.id})}">Details</a>
+                    <form class="inline" th:if="${!activePlanIds.contains(p.id)}" th:action="@{/user/plans/{id}/enroll(id=${p.id})}" method="post">
+                        <button class="btn ok sm" type="submit">Follow</button>
+                    </form>
+                    <span th:if="${activePlanIds.contains(p.id)}" class="badge APPROVED">Following</span>
+                </div>
+                <p th:if="${#lists.isEmpty(plans)}" class="muted">No plans have been published yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly split -->
+    <div class="card" id="split">
+        <h2>My Weekly Workout Split</h2>
+        <p class="muted">Plan what you train each day. Your coach can also set days for you. Leave a day empty for rest.</p>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Day</th><th>Focus</th><th>Details</th><th>Set by</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="r : ${splitRows}">
+                    <td><b th:text="${r.label()}">Monday</b></td>
+                    <td><input name="focus" th:attr="form='sf-' + ${r.day()}" th:value="${r.entry() != null ? r.entry().focus : ''}" placeholder="Rest day"></td>
+                    <td><input name="details" th:attr="form='sf-' + ${r.day()}" th:value="${r.entry() != null ? r.entry().details : ''}" placeholder="e.g. Bench 4x8, Flys 3x12"></td>
+                    <td class="muted" th:text="${r.entry() != null ? r.entry().setBy : '-'}">-</td>
+                    <td style="white-space:nowrap">
+                        <form class="inline" th:id="'sf-' + ${r.day()}" th:action="@{/user/split}" method="post">
+                            <input type="hidden" name="day" th:value="${r.day()}">
+                            <button class="btn sm" type="submit">Save</button>
+                        </form>
+                        <form class="inline" th:if="${r.entry() != null}" th:action="@{/user/split/clear}" method="post">
+                            <input type="hidden" name="day" th:value="${r.day()}">
+                            <button class="btn light sm" type="submit">Clear</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Progress tracker -->
+    <div id="progress">
+        <div class="stats">
+            <div class="stat"><b th:text="${totalWorkouts}">0</b><span>Workouts</span></div>
+            <div class="stat"><b th:text="${totalMinutes}">0</b><span>Minutes trained</span></div>
+            <div class="stat"><b th:text="${totalCalories}">0</b><span>Calories burned</span></div>
+            <div class="stat">
+                <b th:text="${thisWeek} + ' / ' + ${currentUser.weeklyGoal}">0 / 3</b><span>Workouts this week (goal)</span>
+                <div class="progress" style="margin-top:.4rem"><div th:style="'width:' + ${weeklyPct} + '%'"></div></div>
+            </div>
+        </div>
+        <div class="grid">
+            <div class="card">
+                <h2>Fitness Progress Tracker</h2>
+                <p class="muted" th:if="${currentUser.goal}" th:text="'Goal: ' + ${currentUser.goal}">Goal</p>
+                <div class="chart-box"><canvas id="progressChart"></canvas></div>
+            </div>
+            <div class="card">
+                <h2>Log a Workout</h2>
+                <form th:action="@{/user/progress}" method="post">
+                    <div class="row">
+                        <div><label>Workout name</label><input name="workoutName" required></div>
+                        <div><label>Date</label><input type="date" name="logDate"></div>
+                    </div>
+                    <div class="row">
+                        <div><label>Duration (min)</label><input type="number" name="durationMinutes" min="1" required></div>
+                        <div><label>Calories</label><input type="number" name="caloriesBurned" min="0"></div>
+                        <div><label>Weight (kg)</label><input type="number" step="0.1" name="weightKg" min="0"></div>
+                    </div>
+                    <label>Plan (optional)</label>
+                    <select name="planId" style="width:100%">
+                        <option value="">- none -</option>
+                        <option th:each="e : ${enrollments}" th:value="${e.plan.id}" th:text="${e.plan.title}"></option>
+                    </select>
+                    <label>Notes</label>
+                    <input name="notes" maxlength="500" style="width:100%">
+                    <p><button class="btn ok" type="submit">Save workout</button></p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workout history -->
+    <div class="card" id="history">
+        <h2>Workout History &amp; Achievements</h2>
+        <p>
+            <span th:each="a : ${achievements}" class="badge APPROVED" style="margin-right:.4rem" th:text="'🏅 ' + ${a}">badge</span>
+            <span th:if="${#lists.isEmpty(achievements)}" class="muted">Log your first workout to earn achievements.</span>
+        </p>
+        <div class="table-wrap scroll">
+            <table>
+                <thead><tr><th>Date</th><th>Workout</th><th>Plan</th><th>Minutes</th><th>Calories</th><th>Weight (kg)</th><th>Notes</th></tr></thead>
+                <tbody>
+                <tr th:each="l : ${logs}">
+                    <td th:text="${l.logDate}">date</td>
+                    <td th:text="${l.workoutName}">name</td>
+                    <td th:text="${l.plan != null ? l.plan.title : '-'}">plan</td>
+                    <td th:text="${l.durationMinutes}">30</td>
+                    <td th:text="${l.caloriesBurned != null ? l.caloriesBurned : '-'}">-</td>
+                    <td th:text="${l.weightKg != null ? l.weightKg : '-'}">-</td>
+                    <td th:text="${l.notes}">notes</td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(logs)}"><td colspan="7" class="muted">No workouts logged yet.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- Coach interaction -->
+        <div class="card" id="messages">
+            <h2>Coach Interaction</h2>
+            <form th:action="@{/user/messages}" method="post">
+                <label>Coach</label>
+                <select name="coachId" required style="width:100%">
+                    <option th:each="c : ${coaches}" th:value="${c.id}" th:text="${c.name}"></option>
+                </select>
+                <label>Message</label>
+                <textarea name="content" rows="3" maxlength="1000" required></textarea>
+                <p><button class="btn" type="submit">Send</button></p>
+            </form>
+            <div class="scroll">
+                <div th:each="m : ${messages}" class="msg" th:classappend="${m.sender.id == currentUser.id} ? 'mine'">
+                    <b th:text="${m.sender.name} + ' → ' + ${m.recipient.name}">A → B</b>
+                    <span class="muted" th:text="${#temporals.format(m.sentAt, 'dd MMM yyyy HH:mm')}">time</span><br>
+                    <span th:text="${m.content}">text</span>
+                </div>
+                <p th:if="${#lists.isEmpty(messages)}" class="muted">No conversations yet.</p>
+            </div>
+        </div>
+
+        <!-- Profile -->
+        <div class="card" id="profile">
+            <h2>Profile Management</h2>
+            <form th:action="@{/user/profile}" method="post">
+                <label>Name</label>
+                <input name="name" th:value="${currentUser.name}" required style="width:100%">
+                <label>Email (cannot be changed)</label>
+                <input th:value="${currentUser.email}" disabled style="width:100%">
+                <label>Fitness goal</label>
+                <input name="goal" th:value="${currentUser.goal}" style="width:100%">
+                <label>Preferences</label>
+                <textarea name="preferences" rows="2" th:text="${currentUser.preferences}"></textarea>
+                <label>Weekly workout goal</label>
+                <input type="number" name="weeklyGoal" min="1" max="14" th:value="${currentUser.weeklyGoal}" required>
+                <label>New password (leave blank to keep current)</label>
+                <input type="password" name="newPassword" minlength="6" style="width:100%">
+                <p><button class="btn" type="submit">Update profile</button></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Share & feedback -->
+    <div class="grid" id="share">
+        <div class="card">
+            <h2>Share a Tip or Story</h2>
+            <form th:action="@{/user/content}" method="post">
+                <label>Title</label>
+                <input name="title" required style="width:100%">
+                <label>Content</label>
+                <textarea name="body" rows="3" maxlength="2000" required></textarea>
+                <p><button class="btn" type="submit">Submit for approval</button></p>
+            </form>
+            <div th:each="c : ${myContent}" class="muted">
+                <span th:text="${c.title}">title</span> -
+                <span class="badge" th:classappend="${c.status}" th:text="${c.status}">PENDING</span>
+            </div>
+        </div>
+        <div class="card">
+            <h2>Send Feedback to the Team</h2>
+            <form th:action="@{/user/feedback}" method="post">
+                <label>Rating</label>
+                <select name="rating"><option th:each="i : ${#numbers.sequence(5, 1, -1)}" th:value="${i}" th:text="${i} + ' / 5'"></option></select>
+                <label>Your feedback</label>
+                <textarea name="text" rows="3" maxlength="1000" required></textarea>
+                <p><button class="btn" type="submit">Send feedback</button></p>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script th:inline="javascript">
+    new Chart(document.getElementById('progressChart'), {
+        data: {
+            labels: /*[[${chartLabels}]]*/ [],
+            datasets: [
+                { type: 'bar', label: 'Minutes', data: /*[[${chartMinutes}]]*/ [], backgroundColor: '#93c5fd', yAxisID: 'y' },
+                { type: 'line', label: 'Weight (kg)', data: /*[[${chartWeights}]]*/ [], borderColor: '#dc2626',
+                  backgroundColor: '#dc2626', yAxisID: 'y1', spanGaps: true }
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Minutes' } },
+                y1: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'kg' } }
+            }
+        }
+    });
+</script>
+</body>
+</html>
